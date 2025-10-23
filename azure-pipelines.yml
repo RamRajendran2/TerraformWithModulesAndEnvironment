@@ -1,0 +1,129 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pool:
+  vmImage: windows-latest
+
+stages:
+- stage: Dev
+  displayName: 'Deploy to Dev'
+  jobs:
+  - job: Dev_Job
+    displayName: 'Dev Deployment'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Installing Terraform..."
+                curl -L -o terraform.zip https://releases.hashicorp.com/terraform/1.13.4/terraform_1.13.4_windows_amd64.zip
+                tar -xf terraform.zip
+                move terraform.exe C:\Windows\System32\terraform.exe    
+                echo "Verifying installation..."
+                terraform version
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Dev'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          terraform init
+      displayName:  'Terraform Initialize' 
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Dev'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          terraform plan -var-file=dev.tfvars -out=dev.plan
+      displayName:  'Terraform Plan' 
+      env:
+        ARM_USE_OIDC: true
+        ARM_TENANT_ID: $(tenantId)
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+        
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Dev'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          terraform apply -auto-approve dev.plan
+      displayName:  'Terraform Apply' 
+      env:
+        ARM_USE_OIDC: true
+        ARM_TENANT_ID: $(tenantId)
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+- stage: Prod
+  displayName: 'Deploy to Prod'
+  jobs:
+  - job: Prod_Job
+    displayName: 'Prod Deployment'
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Installing Terraform..."
+                curl -L -o terraform.zip https://releases.hashicorp.com/terraform/1.13.4/terraform_1.13.4_windows_amd64.zip
+                tar -xf terraform.zip
+                move terraform.exe C:\Windows\System32\terraform.exe    
+                echo "Verifying installation..."
+                terraform version
+
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Prod'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          terraform init
+      displayName:  'Terraform Initialize' 
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Prod'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          terraform plan -var-file=prod.tfvars -out=prod.plan
+      displayName:  'Terraform Plan' 
+      env:
+        ARM_USE_OIDC: true
+        ARM_TENANT_ID: $(tenantId)
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+        
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'terraformAzureserviceconnection'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/Prod'
+        scriptType: 'batch'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          terraform apply -auto-approve prod.plan
+      displayName:  'Terraform Apply' 
+      env:
+        ARM_USE_OIDC: true
+        ARM_TENANT_ID: $(tenantId)
+        ARM_SUBSCRIPTION_ID: $(subscriptionId)
+        ARM_CLIENT_ID: $(clientId)
+
+
+
