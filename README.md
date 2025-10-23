@@ -7,5 +7,5 @@ step 2: Create service connection using federated credentials
 Step 3: Provide Storage Blob contributor access for back-end storage and Contributor access at subscription level
 Step 4:Run the pipeline  
 
-#Improvements Scope
+# Improvements Scope
 Add Logic to run terraform apply only if changesPresent is true
